@@ -1,6 +1,7 @@
 package com.josealberto.pacientes.services;
 
 
+import com.josealberto.commons.clients.CitaClient;
 import com.josealberto.commons.dto.PacienteRequest;
 import com.josealberto.commons.dto.PacienteResponse;
 import com.josealberto.pacientes.entities.Paciente;
@@ -23,6 +24,7 @@ public class PacienteServiceImpl implements PacienteService {
 
     private final PacienteRepository pacienteRepository;
     private final PacienteMapper pacienteMapper;
+    private final CitaClient citaClient;
 
     @Override
     @Transactional( readOnly = true)
@@ -70,6 +72,7 @@ public class PacienteServiceImpl implements PacienteService {
         Paciente paciente = obtenerPacienteActivoOException(id);
         log.info("Actualizando al paciente con id {}", id);
         
+        pacienteTieneCitasAsignadas(id);
         validarUnicidadId(request, id);
 
         paciente.actualizar(
@@ -95,13 +98,15 @@ public class PacienteServiceImpl implements PacienteService {
     public void eliminar(Long id) {
     	Paciente paciente = obtenerPacienteActivoOException(id);
     	
+    	pacienteTieneCitasAsignadas(id);
     	log.info("Eliminando al paciente con id {}", id);
-    	paciente.setEstadoRegistro(EstadoRegistro.ELIMINADO);
+    	
+    	paciente.eliminar();
     	log.info("El paciente con id {} ha sido eliminado", id);
     }
 
     private Paciente obtenerPacienteActivoOException(Long id) {
-        log.info("Buscando producto con id: {}", id);
+        log.info("Buscando Paciente con id: {}", id);
         return pacienteRepository.findByIdAndEstadoRegistro(id, EstadoRegistro.ACTIVO).orElseThrow(
                 () -> new RecursoNoEncontradoException("Paciente no encontrado con id: " + id));
     }
@@ -128,5 +133,9 @@ public class PacienteServiceImpl implements PacienteService {
         if (pacienteRepository.existsByTelefonoAndEstadoRegistroAndIdNot
                 (request.telefono(), paciente.getEstadoRegistro(), id))
             throw new IllegalArgumentException("Ya existe un paciente registrado con el teléfono: " + request.telefono());
+    }
+    
+    private void pacienteTieneCitasAsignadas(Long id) {
+    	citaClient.pacienteTieneCitasAsignadas(id);
     }
 }

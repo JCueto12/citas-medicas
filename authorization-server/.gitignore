@@ -31,7 +31,3 @@ build/
 
 ### VS Code ###
 .vscode/
-
-.metadata
-servicio-a
-servicio-b

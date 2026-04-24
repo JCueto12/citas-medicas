@@ -8,6 +8,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.josealberto.commons.clients.CitaClient;
 import com.josealberto.commons.dto.MedicoRequest;
 import com.josealberto.commons.dto.MedicoResponse;
 import com.josealberto.commons.enums.DisponibilidadMedico;
@@ -26,6 +27,7 @@ public class MedicoServiceImpl implements MedicoService {
 	
 	private final MedicoRepository medicoRepository;
 	private final MedicoMapper medicoMapper;
+	private final CitaClient citaClient;
 
 
 @Override
@@ -64,6 +66,7 @@ public class MedicoServiceImpl implements MedicoService {
 		Medico medico = obtenerMedicoActivoOException(id);
 		log.info("Actualizando al médico con id {}", id);
 		
+		medicoTieneCitasAsignadas(id);
         valorarUnicosId(request, id);
 
         medico.actualizar(
@@ -86,6 +89,8 @@ public class MedicoServiceImpl implements MedicoService {
 		Medico medico = obtenerMedicoActivoOException(id);
 		log.info("Eliminando al médico con id {}", id);
 		
+		medicoTieneCitasAsignadas(id);
+		
 		medico.eliminar();
 		log.info("Médico con id {} ha sido eliminado", id);
 	}
@@ -101,10 +106,8 @@ public class MedicoServiceImpl implements MedicoService {
 	public void actualizarEstado(Long idMedico, Long idEspecialidad) {
 		Medico medico = obtenerMedicoActivoOException(idMedico);
 		
-		
 		DisponibilidadMedico nuevadisponibilidad = DisponibilidadMedico.obtenerDisponibilidadPorCodigo(idEspecialidad);
 		
-		if(medico.getDisponibilidad() == nuevadisponibilidad) return;
 		
 		DisponibilidadMedico anteriorDisponibilidad = medico.getDisponibilidad();
 		
@@ -163,6 +166,10 @@ public class MedicoServiceImpl implements MedicoService {
 	                        request.cedulaProfesional(), id, medico.getEstadoRegistro()))
 	            throw new IllegalArgumentException(
 	                    "Ya existe un medico registrado con la cedula: " + request.cedulaProfesional());
+	    }
+	    
+	    private void medicoTieneCitasAsignadas(Long id) {
+	    	citaClient.medicoTieneCitasAsignadas(id);
 	    }
 
 }

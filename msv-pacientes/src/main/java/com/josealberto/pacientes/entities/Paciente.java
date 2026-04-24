@@ -104,4 +104,8 @@ public class Paciente {
         
         return expediente.toString();
     }
+    
+    public void eliminar() {
+    	this.estadoRegistro = EstadoRegistro.ELIMINADO;
+    }
 }

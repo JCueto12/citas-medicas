@@ -1,9 +1,7 @@
-package com.josealberto.commons.exceptions;
+package com.josealberto.auth.exceptions;
 
-import com.josealberto.commons.dto.ErrorResponse;
+import com.josealberto.auth.dto.ErrorResponse;
 
-import feign.FeignException;
-import feign.RetryableException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -37,13 +35,7 @@ public class GlobalHandlerException {
         );//Error 400, error del usuario
     }
 
-    @ExceptionHandler(EntidadRelacionadaException.class)
-    public ResponseEntity<ErrorResponse> handleEntidadRelacionadaException(EntidadRelacionadaException e) {
-        log.warn("Error al eliminar un recurso: {}", e.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(new ErrorResponse(HttpStatus.CONFLICT.value(), e.getMessage()));
-    }
-
+    
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ErrorResponse> handleIllegalStateException(IllegalStateException e){
         log.warn("Error en el estado de la petición: {}", e.getMessage());
@@ -64,14 +56,6 @@ public class GlobalHandlerException {
         );
     }
 
-    @ExceptionHandler(RecursoNoEncontradoException.class)
-    //se le debe de pasar en parametro del tipo de excepcion que se manejara
-    public ResponseEntity<ErrorResponse> handleRecursoNoEncontradoException(RecursoNoEncontradoException e){
-        log.warn("No se encontro un recurso: {}", e.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                new ErrorResponse(HttpStatus.NOT_FOUND.value(), e.getMessage())
-        );
-    }
 
     //No se encontro un valor mandado por URL
     @ExceptionHandler(NoResourceFoundException.class)
@@ -91,33 +75,7 @@ public class GlobalHandlerException {
         );
     }
     
-    @ExceptionHandler(FeignException.class)
-    public ResponseEntity<ErrorResponse> handleGenericFeignException(FeignException e) {
-        log.error("Error en la comunicación Feign: " + e.getMessage());
-
-        int status = e.status() > 0 ? e.status() : HttpStatus.INTERNAL_SERVER_ERROR.value();
-        String message = switch (status) {
-            case 400 -> "Solicitud incorrecta al servicio remoto.";
-            case 401 -> "No autorizado para acceder al servicio remoto.";
-            case 403 -> "Acceso prohibido al servicio remoto.";
-            case 404 -> "Recurso no encontrado en el servicio remoto.";
-            case 409 -> "Conflicto: el recurso tiene dependencias activas.";
-            case 503 -> "Servicio remoto no disponible.";
-            default -> "Error al comunicarse con el servicio remoto.";
-        };
-        ErrorResponse response = new ErrorResponse(status, message);
-
-        return ResponseEntity.status(status).body(response);
-    }
     
-    @ExceptionHandler(RetryableException.class)
-    public ResponseEntity<ErrorResponse> handleRetryable(RetryableException e) {
-    	log.error("Servicio remoto no disponible o no responde: " + e.getMessage());
-    	ErrorResponse response = new ErrorResponse(HttpStatus.SERVICE_UNAVAILABLE.value(),
-    			"Servicio remoto no disponible o no responde");
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response);
-    }
-
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneralException(Exception e){
         log.warn("Error interno del servidor: {}", e.getMessage());
